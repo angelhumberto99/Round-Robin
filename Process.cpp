@@ -83,6 +83,8 @@ void Process::setOperation(const std::string &value) {
     operationSymbol = oper[0];
 }
 
+void Process::setQuantum(short value) { quantum = value; }
+
 
 // getters
 const char Process::getOperationSymbol() const { return operationSymbol; }
@@ -131,3 +133,5 @@ const std::string Process::getResult() const {
         default: std::cout << "invalid operator" << std::endl; break;
     }
 }
+
+const short Process::getQuantum() const { return quantum; }

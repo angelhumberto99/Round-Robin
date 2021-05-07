@@ -132,14 +132,21 @@ void Manager::printData() {
             updateBlocked();
             workingProcess.setTT(workingProcess.getTT()+1);
             workingProcess.setTR(workingProcess.getTR()-1);
+            workingProcess.setQuantum(workingProcess.getQuantum()-1);
             if(workingProcess.getTR() == 0){
                 doneProcess();
+                queueProcess();
+            }
+            if (workingProcess.getQuantum() == 0){
+                workingProcess.setQuantum(quantumLength);
+                readyProcesses.push_back(workingProcess);
                 queueProcess();
             }
         }
         SLEEP(DELAY);
     }while(doneProcesses.size() != totalProcess);
         CLEAR;
+        std::cin.ignore();
         printQueued();
         printInProgress();
         printBlocked();
@@ -162,9 +169,11 @@ void Manager::printQueued() {
         std::cout << "Estado: Terminado";
     GOTO_XY(STATE_POS, 1);
     std::cout << "Entrada: " << state;
+    GOTO_XY(ON_HOLD_X_POS, 2);
+    std::cout << "Quantum: " << quantumLength;
 
     // mostramos los procesos en la cola de LISTOS
-    GOTO_XY(ON_HOLD_X_POS, 3);
+    GOTO_XY(ON_HOLD_X_POS, 4);
     if (readyProcesses.empty()) {
         std::cout << "Cola de listos" << std::endl;
         std::cout << ".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-" << std::endl;
@@ -183,31 +192,33 @@ void Manager::printQueued() {
 // proceso en ejecución
 void Manager::printInProgress() {
     if (doneProcesses.size() == totalProcess || workingProcess.getId() == 0) {
-        GOTO_XY(QUEUED_X_POS, 3);
-        std::cout << "Proceso en ejecucion";
         GOTO_XY(QUEUED_X_POS, 4);
+        std::cout << "Proceso en ejecucion";
+        GOTO_XY(QUEUED_X_POS, 5);
         std::cout << ".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-";
         return;
     }
-    GOTO_XY(QUEUED_X_POS, 3);
-    std::cout << "Proceso en ejecucion";
     GOTO_XY(QUEUED_X_POS, 4);
-    std::cout << ".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-";
+    std::cout << "Proceso en ejecucion";
     GOTO_XY(QUEUED_X_POS, 5);
-    std::cout << "ID: " << workingProcess.getId();
+    std::cout << ".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-";
     GOTO_XY(QUEUED_X_POS, 6);
-    std::cout << "Operacion: " << workingProcess.getOperation();
+    std::cout << "ID: " << workingProcess.getId();
     GOTO_XY(QUEUED_X_POS, 7);
-    std::cout << "TME: " << workingProcess.getEMT();
+    std::cout << "Operacion: " << workingProcess.getOperation();
     GOTO_XY(QUEUED_X_POS, 8);
-    std::cout << "TT: " << workingProcess.getTT();
+    std::cout << "TME: " << workingProcess.getEMT();
     GOTO_XY(QUEUED_X_POS, 9);
+    std::cout << "TT: " << workingProcess.getTT();
+    GOTO_XY(QUEUED_X_POS, 10);
     std::cout << "TR: " << workingProcess.getTR();
+    GOTO_XY(QUEUED_X_POS, 11);
+    std::cout << "QR: " << workingProcess.getQuantum();
 }
 
 // procesos finalizados
 void Manager::printFinished() {
-    int pos = 3;
+    int pos = 4;
     GOTO_XY(FINISHED_X_POS, pos);
     std::cout << "Procesos finalizados";
     if (doneProcesses.empty()) {
@@ -227,7 +238,7 @@ void Manager::printFinished() {
 }
 
 void Manager::printBlocked() {
-    int pos = 11;
+    int pos = 13;
     GOTO_XY(QUEUED_X_POS, pos);
     std::cout << "Procesos bloqueados";
     if (blockedProcesses.empty()) {
@@ -259,7 +270,10 @@ void Manager::createData() {
     // pedimos la cantidad de procesos
     std::cout << "Ingrese la cantidad de procesos que desea: ";
     std::cin >> processQuantity;
-    std::cin.ignore();
+    
+    // pedimos el tamaño del quantum
+    std::cout << "Ingrese la longitud del quantum: ";
+    std::cin >> quantumLength;
 
     do {
         createNewProcess();
@@ -281,7 +295,8 @@ void Manager::printFinishedStatus() {
                   << "Tiempo de respuesta: " << doneProcesses[i].getTRes() << std::endl
                   << "Tiempo de finalizacion: " << doneProcesses[i].getTF() << std::endl
                   << "Tiempo de retorno: " << doneProcesses[i].getTRet() << std::endl
-                  << "Tiempo de espera: " << doneProcesses[i].getTE() << std::endl;
+                  << "Tiempo de espera: " << doneProcesses[i].getTE() << std::endl
+                  << "Quantum sobrante: " << doneProcesses[i].getQuantum() << std::endl;
     }
 }
 
@@ -319,6 +334,9 @@ void Manager::createNewProcess() {
     auxInt = 6 + (rand() % 10); // random de 6 - 15
     auxProcess.setEMT(auxInt);
     auxProcess.setTR(auxInt);
+
+    // ingresamos el quantum
+    auxProcess.setQuantum(quantumLength);
 
     // obtenemos la cantidad de procesos que estan en memoria
     int procInMem = readyProcesses.size() + blockedProcesses.size();
@@ -390,6 +408,8 @@ void Manager::printBCP() {
             GOTO_XY(QUEUED_X_POS-3, colPos++);
             std::cout << "Tiempo de respuesta: " << readyProcesses[i].getTRes(); 
         }
+        GOTO_XY(QUEUED_X_POS-3, colPos++);
+        std::cout << "Quantum restante: " << readyProcesses[i].getQuantum();
         colPos++;
     }
 
@@ -419,6 +439,8 @@ void Manager::printBCP() {
         << (globalCounter - workingProcess.getTLL()) - workingProcess.getTT();
         GOTO_XY(FINISHED_X_POS-6, colPos++);
         std::cout << "Tiempo de respuesta: " << workingProcess.getTRes();
+        GOTO_XY(FINISHED_X_POS-6, colPos++);
+        std::cout << "Quantum restante: " << workingProcess.getQuantum();
         colPos++;
     }
 
@@ -449,11 +471,13 @@ void Manager::printBCP() {
         std::cout << "Tiempo de retorno: " << doneProcesses[i].getTRet();
         GOTO_XY(STATE_POS+5, colPos++);
         std::cout << "Tiempo de espera: " << doneProcesses[i].getTE();
+        GOTO_XY(STATE_POS+5, colPos++);
+        std::cout << "Quantum restante: " << doneProcesses[i].getQuantum();
         colPos++;
     }
 
-    // mostramos el bcp del proceso en ejecución (si aplica)
-    colPos = 16;
+    // mostramos el bcp del proceso bloquados (si aplica)
+    colPos = 17;
     GOTO_XY(FINISHED_X_POS-6, colPos++);
     std::cout << "Bloqueados";
     GOTO_XY(FINISHED_X_POS-6, colPos++);
@@ -480,6 +504,8 @@ void Manager::printBCP() {
         std::cout << "Tiempo de respuesta: " << blockedProcesses[i].getTRes();
         GOTO_XY(FINISHED_X_POS-6, colPos++);
         std::cout << "Tiempo bloqueado: " << 5 - blockedProcesses[i].getTTB();
+        GOTO_XY(FINISHED_X_POS-6, colPos++);
+        std::cout << "Quantum restante: " << blockedProcesses[i].getQuantum();
         colPos++;
     }
 

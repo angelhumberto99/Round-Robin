@@ -32,6 +32,7 @@ class Manager {
         bool pause;
         bool showBCP;
         int uniqueKey;
+        int quantumLength;
 
         bool validateId(int auxInt, std::vector<int> &ids);
         bool isOperationValid(Process &auxProcess);
@@ -48,6 +49,8 @@ class Manager {
         void printBCP();
     public:
         Manager() { 
+            quantumLength = 0;
+            totalProcess = 0;
             pause = false;
             showBCP = false;
             state = ' ';

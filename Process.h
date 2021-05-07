@@ -23,6 +23,7 @@ class Process{
         short TE; // tiempo de espera
         bool ready; // bandera para obtener el tiempo de llegada
         bool response; // bandera para obtener el tiempo de respuesta
+        short quantum;
 
     public:
         Process() { 
@@ -30,6 +31,7 @@ class Process{
             TTB = 0;
             ready = false;
             response = false;
+            quantum = 0;
         }
         ~Process() {}
 
@@ -49,6 +51,7 @@ class Process{
         void setTE(short value); 
         void setReady(bool value);
         void setResponse(bool value);
+        void setQuantum(short value);
         
         // getters
         const std::string getOperation() const;
@@ -67,6 +70,7 @@ class Process{
         const short getTE() const; 
         const bool getReady() const;
         const bool getResponse() const;
+        const short getQuantum() const;
 
         // sobrecarga de operador
         const Process& operator=(const Process &other) {
@@ -85,6 +89,7 @@ class Process{
             this->TE = other.TE;
             this->ready = other.ready;
             this->response = other.response;
+            this->quantum = other.quantum;
             return *this;
         }
 };

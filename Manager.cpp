@@ -24,8 +24,8 @@ void Manager::queueProcess() {
             // Tiempo de respuesta = contador global - tiempo de llegada
             readyProcesses[0].setTRes(globalCounter - readyProcesses[0].getTLL());
         }
-
-        workingProcess = readyProcesses[0];
+        if (readyProcesses[0].getId() != 0)
+            workingProcess = readyProcesses[0];
     }
     else
         return;
@@ -39,6 +39,8 @@ void Manager::doneProcess() {
         workingProcess.setTRet(workingProcess.getTF() - workingProcess.getTLL());
         workingProcess.setTE(workingProcess.getTRet() - workingProcess.getTT());
         doneProcesses.push_back(workingProcess);
+        workingProcess.setId(0);
+        workingProcess.setTR(1);
         if (!newProcesses.empty()) {
             // setteamos el tiempo de llegada de cada proceso nuevo
             newProcesses[0].setTLL(globalCounter);
@@ -54,7 +56,8 @@ void Manager::selectState(char character) {
         case 'i': // interrupción
             // solo se puede interrumpir si no esta en pausa
             // y el proceso que se esta trabajando no es nulo
-            if(!pause&&workingProcess.getId()!=0) {
+            if(!pause && workingProcess.getId() != 0) {
+                workingProcess.setQuantum(quantumLength);
                 workingProcess.setTTB(5);
                 blockedProcesses.push_back(workingProcess);
                 workingProcess.setId(0);
@@ -139,7 +142,8 @@ void Manager::printData() {
             }
             if (workingProcess.getQuantum() == 0){
                 workingProcess.setQuantum(quantumLength);
-                readyProcesses.push_back(workingProcess);
+                if (workingProcess.getId() != 0)
+                    readyProcesses.push_back(workingProcess);
                 queueProcess();
             }
         }
@@ -398,8 +402,6 @@ void Manager::printBCP() {
         GOTO_XY(QUEUED_X_POS-3, colPos++);
         std::cout << "Tiempo de servicio: " << readyProcesses[i].getTT();
         GOTO_XY(QUEUED_X_POS-3, colPos++);
-        std::cout << "Tiempo de retorno: " << globalCounter - readyProcesses[i].getTLL();
-        GOTO_XY(QUEUED_X_POS-3, colPos++);
         std::cout << "Tiempo de espera: " 
         << (globalCounter - readyProcesses[i].getTLL()) - readyProcesses[i].getTT(); 
                   
@@ -432,8 +434,6 @@ void Manager::printBCP() {
         std::cout << "Tiempo restante: " << workingProcess.getTR();
         GOTO_XY(FINISHED_X_POS-6, colPos++);
         std::cout << "Tiempo de servicio: " << workingProcess.getTT();
-        GOTO_XY(FINISHED_X_POS-6, colPos++);
-        std::cout << "Tiempo de retorno: " << globalCounter - workingProcess.getTLL();
         GOTO_XY(FINISHED_X_POS-6, colPos++);
         std::cout << "Tiempo de espera: " 
         << (globalCounter - workingProcess.getTLL()) - workingProcess.getTT();
@@ -495,8 +495,6 @@ void Manager::printBCP() {
         std::cout << "Tiempo restante: " << blockedProcesses[i].getTR();
         GOTO_XY(FINISHED_X_POS-6, colPos++);
         std::cout << "Tiempo de servicio: " << blockedProcesses[i].getTT();
-        GOTO_XY(FINISHED_X_POS-6, colPos++);
-        std::cout << "Tiempo de retorno: " << globalCounter - blockedProcesses[i].getTLL();
         GOTO_XY(FINISHED_X_POS-6, colPos++);
         std::cout << "Tiempo de espera: " 
         << (globalCounter - blockedProcesses[i].getTLL()) - blockedProcesses[i].getTT();
